@@ -20,54 +20,26 @@ public:
 
     std::vector<float> hidden_vec;
 
-
-
     // 2a
-
-
-
     NeuralNet(const std::vector<unsigned> &topology);
 
-
-
     // 2b
-
-
-
     void output_all(std::vector<double> &res_vals);
 
-
-
     // 2c
-
-
-
     void output_spec();
 
-
-
     // 2d
-
-
-
     void read_in();
 
-
-
     // 2e
-
-
-
     void backpropagation();
 
-
-
     // 2f
+    void math_dist();
 
-
-
-    void init_cnn(const std::vector<unsigned> &topology);
-
+    // Milenstone 3: Aufgabe 2 a)
+    void conv3D();
 
 
 private:

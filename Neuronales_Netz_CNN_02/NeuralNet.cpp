@@ -24,7 +24,7 @@ NeuralNet::NeuralNet(const std::vector<unsigned> &topology){
             std::cout << " Neuron erstellt "<<std::endl;
         }
     }
-    std::cout << "Wollen Sie Die Ausgabe für eine spezifische Eingabe in das Neurale Netz? Ja [1] Nein [0]";
+    std::cout << "Wollen Sie Die Ausgabe fuer eine spezifische Eingabe in das Neurale Netz? Ja [1] Nein [0]";
     std::cin >> inp;
     std::cout << "" << std::endl;
     if(inp == 1){
@@ -92,7 +92,7 @@ void NeuralNet::read_in(){
     std::string u_input;
     std::ifstream file;
     std::string fileid;
-    std::cout<<"single file [1] oder batch[0] oder kein Import [2]:";
+    std::cout<<"single file [1] oder batch[0] oder kein Import [2] oder um die CNN [3] zu gehen: ";
     std::cin >> inp;
     if(inp == 0){
         std::cout<< "Wie viele Dateien sind in dem Batch?" ;
@@ -107,11 +107,11 @@ void NeuralNet::read_in(){
                 fileid = "nqgp\\phsd50csr.auau.31.2gev.centr.0000phsd50csr.auau.31.2gev.centr."+ std::to_string(numb) + "_event.dat";
             }
             file.open(fileid);
-            while (file >> num){ // solage ein Wert aus der  file gelesen werden kann ist num /= 0. Sind alle Werte eingelesen wird num 0 while bricht ab
+            while (file >> num){
                     num = file.get();
                     readin_val.push_back(num);
             }
-            input_vec.swap(readin_val); // swap hier falsch pushback evtl.
+            input_vec.swap(readin_val);
             readin_val.clear();
             file.close();
             numb++;
@@ -133,6 +133,9 @@ void NeuralNet::read_in(){
     else if(inp == 2){
             return;
     }
+    else if (inp == 3) {
+        return NeuralNet::conv3D();
+    }
     //if(net_struct.front().size()!= num){
     //    std::cout << "Topologie passt nicht zum Datenset";
     //    return;
@@ -145,28 +148,53 @@ void NeuralNet::read_in(){
 
 void NeuralNet::backpropagation(){
     // Hier werden die erhaltenen Gewichtungen an die Neuronen/softmaxfunktion zurückgegeben
+
 }
 
-void NeuralNet::init_cnn(const std::vector<unsigned> &topology){
-    // 2a
-    // initalisieren der ConV3D Channel. Channel Contructor
-    unsigned int num_layer =0;
-    std::cout<< "Geben sie die Anzahl der Max-Pool3D Layer an: ";
-    std::cin >> num_layer;
-    for(unsigned i = 0; i < num_layer ; i++){
-        net_struct.push_back(Layer()); // Erstellt einen Layer(Vektor) in dem Objekt net_struct, welches ein Vektor von einem Vektor ist
-        for(unsigned j = 0; j <= topology[i]; j++){ // Zugriff auf den eingegeben Wert um größe der Topologie abzufragen;
-                                                    //<= um bias Neuron zu erstellen
-            ///Wenn der Output Layer Anzahl des höchsten Output Layer ist
-            ///unsigned out_Num = num_layer == topology.size() - 1 ?  0 : topology[num_layer + 1];
-            ///out_Num
-            net_struct.back().push_back(Neuron());  // Mit .back greifen wir auf das zuletzt erstellte Element von net_struct zu
-                                                    // .push_back speichert dann in dieser Position genau eine Instanz von Neuron ab
-            std::cout << " Neuron erstellt "<<std::endl;
-        }
-    }
-    // initisalisierung Kernel Contructor Kernel
-}
 
+void NeuralNet::math_dist(){
+    // Hier werden Winkel und Momentum für 4c berechnet (genaueres verständniss von softmax nötig)
+
+}
 
 // evtl. muss neuron_res in Neural Net berechnet werden
+
+//Man benötig einen Kernel- und Channel-Matrix um diese zu multiplizieren
+//Matrizen: kernel[3][3][3] * channel[22][22][22] = convY
+void NeuralNet::conv3D()
+{
+    // Hier wird die Matrixmultiplikation berechnet, indem Y = X * W für i,j,k
+    float matrix_X[5][5] = { 0 };
+    int weight_m[3][3][3] = { 0 };
+    float matrix_Y[5][5] = { 0 };
+
+
+    //Eigentliche matrix:
+    int n = 22;
+    float conv_Y[22][22][22] = { 0 };
+
+    for(int i = 0; i < 3; i++) // l = i - 1
+    {
+        for(int j = 0; j < 3; j++) // m = j - 1
+        {
+            matrix_X[i][j] = rand() % 9;
+            //weight_m[i][j] = -1 + rand() % 2;
+
+            for(int k = 0; k < 3; k++) // n = k - 1
+            {
+                //matrix_Y[i][j] += matrix_X[i][k] * weight_m[k][j];
+                weight_m[i][j][k] = -1 + rand() % 3;
+                std::cout << weight_m[i][j][k] << " ";
+
+            }
+            //std::cout << matrix_x[i][j][k] << " ";
+        }
+        std::cout << "\n";
+    }
+
+
+
+
+
+
+}

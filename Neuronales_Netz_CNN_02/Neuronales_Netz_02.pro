@@ -17,6 +17,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         NeuralNet.cpp \
         Neuron.cpp \
+        cnn.cpp \
         main.cpp
 
 # Default rules for deployment.
@@ -26,4 +27,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     NeuralNet.h \
-    Neuron.h
+    Neuron.h \
+    cnn.h
