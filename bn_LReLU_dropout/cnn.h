@@ -1,106 +1,202 @@
+#include <QCoreApplication>
 #include <iostream>
 #include <vector>
 
-#ifndef CNN_H
-#define CNN_H
+#include <stdlib.h>
+#include <math.h>
+#include <cstdlib>
+#include <fstream>
+#include <string>
+#include <algorithm>
 
+#include "Net.h"
+#include "Neuron.h"
 
-class Channel{
+#ifndef MAINCNN_H
+#define MAINCNN_H
+
+class Channel
+{
 public:
+
     Channel(){}
     ~Channel(){}
 
-    // Parameter:
-    std::vector<std::vector<int>> imageM; //Channel Matrix
+    std::vector<std::vector<std::vector<int>>> imageM;  // Channel-Matrix
+    std::vector<std::vector<std::vector<int>>> kernelM; // Kernel-MAtrix
 
-    std::vector<std::vector<int>> kernelM;  //Kernel matrix
 
-    std::vector<int> trace;    //Backtrace Vector
-    std::vector<int> mask;    // Backtrace Vector
+    std::vector<int> trace;    //Backtrace Vector 10x10x10
+    std::vector<int> mask;    // Backtrace Vector 5x5x5
 
-    std::vector<std::vector<int>> kernelW; //Kernel W' rotierte Kernel
+    std::vector<std::vector<std::vector<int>>> kernelW; //Kernel W' rotierte Kernel
+
     int kernelWeight;
 
-    //Methoden der Channel Klasse:
-    std::vector<std::vector<int>> get(); // Die Werte werden in die Input Matrix übertragen.
-    void add();
-    void set(std::vector<std::vector<int>> image, std::vector<std::vector<int>> kernelMatrix);
-    void Imageclear();
+    std::vector<int> change_w;    // changed weights
+    std::vector<std::vector<std::vector<int>>> o_matrix; // Original Matrix
 
-    std::vector<std::vector<int>> activationLReLU();
-    std::vector<std::vector<int>> actDervateLeakyReLU();
+    double bias = rand() % 3 - 1 ;
+
+    //int zeile, spalte, k2, l2;
+
+    int setMatrix(std::vector<std::vector<std::vector<int>>> vec, std::vector<std::vector<std::vector<int>>> kernel);
+
     void printMatrix();
+
     void showKernel();
 
-    ///Convolution Neural Network:
-    void do_Kernel();   // Channel 28
-    void do_Kernel32(); // Channel 32
+    void imageclear();
+
+    std::vector<std::vector<std::vector<int>>> get();
+    //
+    void add();
+//////////////////////////////////////////////// Convolution //////////////////////////////////////////////////////////
+
+    std::vector<std::vector<std::vector<int>>> transition(std::vector<std::vector<std::vector<int>>> inputMatrix,
+                                             size_t rowIndex, size_t colIndex, size_t kIndex, size_t rowSize, size_t colSize, size_t kSize);
+
+    int convolution(std::vector<std::vector<std::vector<int>>> image,
+                    std::vector<std::vector<std::vector<int>>> kernell);
+
+    std::vector<std::vector<std::vector<int>>> activationLReLU(); // Leaky ReLU
+    std::vector<std::vector<std::vector<int>>> actDervateLeakyReLU();
+
+
+    void do_Kernel();
     void do_Kernel2();  // MaxPooling
-    int maxPooling32(std::vector<std::vector<int>> image);
-
-    void do_Kernel3();
-    int maxPooling64(std::vector<std::vector<int>> image);
-
-    std::vector<std::vector<int>> transition(std::vector<std::vector<int>> inputMatrix, size_t rowIndex,
-                   size_t colIndex, size_t rowSize, size_t colSize);
-
-    // Image * Kernel = Feature Map:
-    int convolution(std::vector<std::vector<int>> image, std::vector<std::vector<int>> kernel);
+    int maxPooling32(std::vector<std::vector<std::vector<int>>> image);
+////////////////////////////////////////////////////////////////////////////
 
     void connect();
-    int conv64(std::vector<std::vector<int>> iMatrix, std::vector<std::vector<int> > kernel);
+    int conv64(std::vector<std::vector<std::vector<int>>> image,
+               std::vector<std::vector<std::vector<int>>> kernell);
 
-    void back_propConv64();
+    void do_Kernel3(); // Conv32 10x10x10
+
+    void do_Kernel32(); // Channel 32 x 10x10x10
+
+    int maxPooling64(std::vector<std::vector<std::vector<int>>> image); // MaxPooling 64 x 10x10x10
+
+    void weight_change();
+
     void back_propConv32();
     int rotationKernel();
+    //std::vector<std::vector<std::vector<int>>> actDervateLeakyReLU();
 };
 
 class Kernel : public Channel{
 public:
     //Parameter:
-    std::vector<std::vector<int> > kernelMatrix;
+    std::vector<std::vector<std::vector<int>>> kernelMatrix;
 
     //Methoden der Kernel Klasse:
-    void setKernel(std::vector<std::vector<int> > kernel);
-    std::vector<std::vector<int>> resetKernel();
+    void setKernel(std::vector<std::vector<std::vector<int>>> kernel);
+    std::vector<std::vector<std::vector<int>>> resetKernel();
     void showKernel();
 };
 
-void Channel::set(std::vector<std::vector<int> > image, std::vector<std::vector<int>> kernelMatrix){
-    imageM = image; // Setze die Werte in die Matrix.
-    kernelM = kernelMatrix;
+
+
+
+inline int Channel::setMatrix(std::vector<std::vector<std::vector<int> > > image, std::vector<std::vector<std::vector<int> > > kernel){
+
+        imageM = image;
+        kernelM = kernel;
+        kernelW = image;
+
 }
 
-inline std::vector<std::vector<int>> Channel::get(){
+inline void Channel::printMatrix()
+{
+    //Gebe die Image-Matrix aus:
+
+    std::cout << "Image-Matrix size: " << imageM.size() << "\n";
+    for(int i = 0; i < imageM.size(); i++){
+        for(int j = 0; j < imageM.size(); j++){
+            for(int k = 0; k < imageM.size(); k++){
+                //
+                std::cout << "|" << imageM[i][j][k];
+                }
+            }
+        std::cout << "\n";
+    }
+}
+
+inline void Channel::showKernel()
+{
+    // Ausgabe der Kernel-Matrix:
+
+    std::cout << "\nKernel-Matrix size: " << kernelM.size() << "\n";
+    for(int i = 0; i < kernelM.size(); i++){
+        for(int j = 0; j < kernelM.size(); j++){
+            for(int k = 0; k < kernelM.size(); k++){
+                //
+                std::cout << "|" << kernelM[i][j][k];
+            }
+        }
+        std::cout << "\n";
+    }
+}
+
+inline std::vector<std::vector<std::vector<int>>> Channel::get()
+{
     return imageM; // Gebe die Image-Matrx zurück.
-    return kernelM;
 }
 
-inline void Channel::add(){
+inline void Channel::imageclear()
+{
+    //imageM.clear();
+    //kernelM.clear();
+    for(size_t r1 = 0; r1 < imageM.size(); r1++){
+        for(size_t c1 = 0; c1 < imageM.size(); c1++){
+            for(size_t k1 = 0; k1 < imageM.size(); k1++){
+                imageM[r1][c1][k1] = 0;
+            }
+        }
+    }
 
+    for(size_t r2 = 0; r2 < kernelM.size(); r2++){
+        for(size_t c2 = 0; c2 < kernelM.size(); c2++){
+            for(size_t k2 = 0; k2 < kernelM.size(); k2++){
 
+                kernelM[r2][c2][k2] = 0;
+            }
+        }
+    }
+    std::cout << "\nDie Channel- und Kernel-Matrix wurde geleert!!!\n";
+}
+
+inline void Channel::add()
+{
+    //std::cout << "It works!!\n";
     // Hier wird das Ergebnis der Convolution berechnet, dass mithilfe einer
     // Zwischen-Parameter gespeichert wird und diese auf die Image-Matrix 32x nxnxn
     // Übertagen wird.
 
-    std::vector<std::vector<int>> tempMatrix(imageM.size() + 2);
+    std::vector<std::vector<std::vector<int>>> tempMatrix(imageM.size() + 2);
     // Die Matrix wird außerhalb des Randes mit 0 durch +2 initialisiert und mit 0 gefüllt
-    std::vector<int> tempVector(imageM[0].size() + 2, 0);
+    std::vector<std::vector<int>> tempVector(imageM.size() + 2, std::vector<int>(imageM[0].size() + 2, 0));
 
-    //vector<vector<vector<int>>> temM3D(m3D_.size() + 2);
-    //vector<int> temVec(m3D_[0].size() + 2, 0);
+    //std::vector<int> temp(imageM[0].size() + 2, 0)
+   //(std::vector<int>(imageM[0].size() + 2, 0))
 
+    //std::cout << "Image-Matrix size: " << imageM.size() << "\n";
     tempMatrix[0] = tempVector;
-    //temM3D[0] = temVec;
 
     for (size_t i = 1; i < imageM.size() + 1; ++i)
     {
         tempMatrix[i] = tempVector;
-        for (size_t j = 1; j < imageM[0].size() + 1; ++j)
-        {
-            tempMatrix[i][j] = imageM[i - 1][j - 1];
-            //std::cout << "|" << tempMatrix[i][j];
 
+        for (size_t j = 1; j < imageM.size() + 1; ++j)
+        {
+            //tempMatrix[i][j] = tempVector;
+
+            for(size_t k = 1; k < imageM.size() + 1; ++k)
+            {
+                tempMatrix[i][j][k] = imageM[i - 1][j - 1][k - 1];
+                //std::cout << "|" << tempMatrix[i][j][k];
+            }
         }
         //std::cout << "\n";
     }
@@ -108,132 +204,175 @@ inline void Channel::add(){
     imageM = tempMatrix; // Ergebnis-Matrix
 }
 
-inline void Channel::Imageclear(){
-    imageM.clear(); // Leere die Image-Matrix.
-    kernelM.clear();
-    std::cout << "\nDie Channel- und Kernel-Matrix wurde geleert!!!\n";
-}
-
-inline void Channel::printMatrix(){
-
-    for(int i = 0; i < imageM.size(); i++)
-    {
-        for(int j = 0; j < imageM.size(); j++)
-        {
-            std::cout << "|" << imageM[i][j];
-        }
-        std::cout << "\n";
-    }
-}
-
-inline void Channel::showKernel(){
-    for(int i = 0; i < kernelM.size(); i++){
-        for(int j = 0; j < kernelM.size(); j++){
-            std::cout << "|" << kernelM[i][j];
-        }
-        std::cout << "\n";
-    }
-}
-
-/////////////////////////////////////////////////// Convolution //////////////////////////////////////////////////////////////////////////7
+//////////////////////////////////////////////// Convolution //////////////////////////////////////////////////////////
 
 
-inline void Channel::do_Kernel()
+inline std::vector<std::vector<std::vector<int>>> Channel::transition(std::vector<std::vector<std::vector<int>>> inputMatrix,
+                                         size_t rowIndex, size_t colIndex, size_t kIndex, size_t rowSize, size_t colSize, size_t kSize)
 {
-    std::vector<std::vector<int>> featureMap(imageM.size() - kernelM.size() + 1);
-    std::cout << "featureMap-Matrix size: "<< featureMap.size() << "\n";
-    //Row index
-    for (size_t rowSize = 0; rowSize < featureMap.size(); ++rowSize)
-    {
-        std::vector<int> tVector(imageM[0].size() - kernelM[0].size() + 1);
-        featureMap[rowSize] = tVector;
-        // Column index
-        for (size_t columnSize = 0; columnSize < tVector.size(); ++columnSize)
-        {
 
-            featureMap[rowSize][columnSize] = convolution(transition(imageM, rowSize, columnSize, kernelM.size(), kernelM[0].size()), kernelM);
-            //std::cout << featureMap[rowSize][columnSize] << " ";
-        }
-        //std::cout << "\n";
-    }
-    imageM = featureMap;
+    /* Diese Funktion ist der Zwischenvektor, welches die Image-Matrix durch 0en
+     * gefüllt und erweitert wird, sodass man mit diesem Vektor bzw.
+     * Matrix die Convolution berechnen kann.
+     */
 
-}
-
-
-inline std::vector<std::vector<int>> Channel::transition(std::vector<std::vector<int>> inputMatrix, size_t rowIndex, size_t colIndex, size_t rowSize, size_t colSize){
-
-    std::vector<std::vector<int>> partOfMatrix(rowSize);
-    //std::cout << "rowSize: " << rowSize << ", colSize: " << colSize << "\n";
+    std::vector<std::vector<std::vector<int>>> partOfMatrix(rowSize);
+    //std::cout << "rowSize: " << rowSize << ", colSize: " << colSize << ", kSize: " << kSize << "\n";
 
     for (size_t i = 0; i < rowSize; ++i) // Zeilen Größe des Vectors
     {
-         std::vector<int> vecTemp(colSize);
+         std::vector<std::vector<int>> vecTemp(colSize, std::vector<int>(kSize));
          partOfMatrix[i] = vecTemp;
 
          for (size_t j = 0; j < colSize; ++j) // Spalten Größe der Matrix
          {
-              partOfMatrix[i][j] = inputMatrix[rowIndex + i][colIndex + j];
+             //std::vector<int> tem(kSize);
+             //partOfMatrix[i][j] = tem;
 
+             for(size_t k = 0; k < kSize; k++)
+             {
+                 //std::cout << partOfMatrix[i][j][k] << " ";
+                 partOfMatrix[i][j][k] = inputMatrix[rowIndex + i][colIndex + j][kIndex + k];
+                 //std::cout << partOfMatrix[i][j][k] << " ";
+             }
+              //partOfMatrix[i][j][k][l] = inputMatrix[rowIndex + i][colIndex + j][kIndex + 1][lIndex + 1];
          }
+         //std::cout << "\n";
     }
     //std::cout << "Input Groesse: " << partOfMatrix.size() << "\n";
     return partOfMatrix;
 }
 
-
-inline std::vector<std::vector<int>> Channel::activationLReLU()
-{
-    for(int i = 0; i < imageM.size(); i++){
-        for(int j = 0; j < imageM.size(); j++){
-            // Leaky ReLU activation -> max(0.01*x, x)
-            //Falls die Matrix größer als 0.01 * matrix ist:
-
-            //imageM[i][j] = (image[i][j] > int(0.01 * image[i][j]) ? image[i][j] : int(0.01 * image[i][j]));
-
-            if(imageM[i][j] > 0) /// Falls x > 0 ist dann bleibt der Wert von der Matrix erhalten.
-            {
-                imageM[i][j] = imageM[i][j];
-            }
-            else /// Sonst wird max(x * 0.01, x) verrechnet und das Maximum benutzt.
-            {
-                imageM[i][j] = std::max(int(0.01 * imageM[i][j]), imageM[i][j]);
-            }
-            //imageM[i][j] = (0.01 * imageM[i][j]);
-        }
-    }
-    return imageM;
-
-    ///wenn der Wert vor dem : nicht gleich 0 ist, dann ist es der Wert nach dem :
-
-}
-
-inline int Channel::convolution(std::vector<std::vector<int>> image, std::vector<std::vector<int>> kernel)
+inline int Channel::convolution(std::vector<std::vector<std::vector<int>>> image, std::vector<std::vector<std::vector<int>>> kernell)
 {
 
-    std::vector<std::vector<int>> featureMap(image.size() - kernel.size() + 1);
+    /* Hier wird Convolution berechnet von Kernel und Channel.
+     * Dabei hat die Channel-Matrix eine Grösse von 28 x 20x20x20 und die Kernel-Matrix
+     * eine Grösse von 28/32 x 3x3x3.
+     * Die Kernel-Matrix wird bei der Multiplikation der Channel-Matrix jeweils um 1 verschoben,
+     * da ausserhalb des Channel-matrix Bereiches noch 0en hizugefügt wurden.
+     */
 
     int bias = 0;
     int s = 0;
 
     for(int i = 0; i < image.size(); i++)
     {
-        for(int j = 0; j < image[0].size(); j++)
+        for(int j = 0; j < image.size(); j++)
         {
-            /// Image * Kernel + Bias = Y-Matrix 32 x 20x20x20
-            //std::cout << image[i][j] << " ";
-            s += image[i][j] * kernel[i][j] + bias;
+            for(int k = 0; k < image[0].size(); k++)
+            {
 
-            //std::cout << "|" << ss;
+                //std::cout << "|" << image[i][j][k];
+                /// Image * Kernel + Bias = Y-Matrix 32 x 20x20x20
+                s += image[i][j][k] * kernell[i][j][k] + bias;
+                //std::cout << "|" << s;
+
+            }
+
         }
         //std::cout << "\n";
      }
-
     return s;
-
 }
 
-/////////////////////////////////////////////// Max Pooling ///////////////////////////////////////////////////////////
+inline std::vector<std::vector<std::vector<int>>> Channel::activationLReLU()
+{
+
+    /* Diese Funktion ist eine Aktivierungsfunktion, indem es jeden x-Wert überprüft, ob es
+     * grösser 0 ist, dann bleibt der Wert vorhanden, aber wenn der Wert kleiner als 0 ist
+     * dann wird x mit 0.01 multipliziert und auf 0 aufgerundet.
+     */
+
+    for(int i = 0; i < imageM.size(); i++)
+    {
+        for(int j = 0; j < imageM.size(); j++)
+        {
+            for(int k = 0; k < imageM.size(); k++)
+            {
+                // Leaky ReLU activation -> max(0.01*x, x)
+                //Falls die Matrix größer als 0.01 * matrix ist:
+
+                //imageM[i][j] = (image[i][j] > int(0.01 * image[i][j]) ? image[i][j] : int(0.01 * image[i][j]));
+
+                if(imageM[i][j][k] > 0) /// Falls x > 0 ist dann bleibt der Wert von der Matrix erhalten.
+                {
+                    imageM[i][j][k] = imageM[i][j][k];
+                }
+                else /// Sonst wird max(x * 0.01, x) verrechnet und das Maximum benutzt.
+                {
+                    imageM[i][j][k] = std::max(int(0.01 * imageM[i][j][k]), imageM[i][j][k]);
+                }
+                    //imageM[i][j] = (0.01 * imageM[i][j]);
+                }
+            }
+        }
+
+    return imageM;
+    ///wenn der Wert vor dem : nicht gleich 0 ist, dann ist es der Wert nach dem :
+}
+
+inline int Channel::maxPooling32(std::vector<std::vector<std::vector<int>>> imageM)
+{
+    /* Hier wird jeweils der maximale Wert gefiltert, so dass die Matrix
+     * reduziert wird, z.B. eine 10x10x10-Matrix entsteht.
+     */
+
+    int s = 0;
+    // Test:
+    //std::cout << "Max Image hat die Groesse: " << imageM.size() << "\n";
+
+    for (size_t i = 0; i < imageM.size()  ; ++i) // Zeile
+    {
+        for (size_t j = 0; j < imageM.size() ; ++j) // Spalte
+        {
+            for(size_t k = 0; k < imageM[0].size(); k++){
+                // kernell[i][j] std::vector<std::vector<int>> kernell
+                s = std::max(s, imageM[i][j][k]); // Das maximale Element wird ausgefiltert
+            }
+        }
+    }
+    trace.push_back(s);
+    return s;
+}
+
+inline void Channel::do_Kernel()
+{
+    /* Diese Funktion berechnet die Goessen der Kernel- und Image-Matrix aus,
+     * so dass diese für die Convolution-Berechnung verwendet werden.
+     * Da die Image-Matrix und die Kernel-Matrix verschiedene Grössen haben,
+     * wird die Image-Matrix mit Kernel-Matrix Grösse angepasst, damit
+     * Multiplikation des Kernels sich immer um 1 verschieben kann.
+     */
+
+    //std::cout << "do_Kenrel() funktioniert auch!!\n";
+    std::vector<std::vector<std::vector<int>>> featureMap(imageM.size() - kernelM.size() + 1);
+    //std::cout << "featureMap-Matrix size: "<< featureMap.size() << "\n";
+
+    //Row index
+    for (size_t rowSize = 0; rowSize < featureMap.size(); ++rowSize)
+    {
+        //std::vector<int>(imageM[0].size() - kernelM[0].size() + 1)
+        std::vector<std::vector<int>> tVector(imageM.size() - kernelM.size() + 1);
+        featureMap[rowSize] = tVector;
+        // Column index
+
+        for (size_t columnSize = 0; columnSize < featureMap.size(); ++columnSize)
+        {
+            std::vector<int> tVec(imageM.size() - kernelM.size() + 1);
+            featureMap[rowSize][columnSize] = tVec;
+
+            for(size_t kSize = 0; kSize < featureMap.size(); kSize++)
+            {
+                //std::cout << featureMap[rowSize][columnSize][kSize] << " ";
+                featureMap[rowSize][columnSize][kSize] = convolution(transition(imageM, rowSize, columnSize, kSize, kernelM.size(), kernelM.size(), kernelM.size()), kernelM);
+                //std::cout << featureMap[rowSize][columnSize][kSize] << " ";
+            }
+        }
+        //std::cout << "\n";
+    }
+    imageM = featureMap;
+}
 
 inline void Channel::do_Kernel2()
 {
@@ -243,42 +382,93 @@ inline void Channel::do_Kernel2()
 
     std::cout << "Matrixgroesse von ImageM: " << imageM.size() << "\n";
 
-    std::vector<std::vector<int>> featureMap(int(imageM.size() / pool));
+    std::vector<std::vector<std::vector<int>>> featureMap(int(imageM.size() / pool));
 
     std::cout << "Matrixgroesse von featureMap: " << featureMap.size() << "\n";
 
     for (size_t i = 0; i < featureMap.size(); ++i)
     {
-        std::vector<int> tVector(int(imageM.size() / stride));
-        //std::cout << "Groesse von tVector: " << tVector.size() << "\n";
-        featureMap[i] = tVector;  // Zwischenvektor
+        std::vector<std::vector<int>> cVector(int(imageM.size() / stride));
+        featureMap[i] = cVector;
+        //std::cout << "Groesse von cVector: " << cVector.size() << "\n";
 
-        for (size_t j = 0; j < tVector.size(); ++j)
+        for (size_t j = 0; j < cVector.size(); ++j)
         {
-            featureMap[i][j] = maxPooling32(transition(imageM, (kernelM.size() - 1) * i, (kernelM[0].size() - 1) * j,
-                                          kernelM.size() - 1, kernelM[0].size() - 1));
+            std::vector<int> tVector(int(imageM.size() / stride));
+            //std::cout << "Groesse von tVector: " << tVector.size() << "\n";
+            featureMap[i][j] = tVector;  // Zwischenvektor
+
+            for(size_t k = 0; k < tVector.size(); k++)
+            {
+                //std::cout << "| " << featureMap[i][j][k];
+                featureMap[i][j][k] = maxPooling32(transition(imageM, (kernelM.size() - 1) * i, (kernelM.size() - 1) * j, (kernelM.size() - 1) * k,
+                                              kernelM.size() - 1, kernelM.size() - 1, kernelM.size() - 1));
+
+                //std::cout << "|" << featureMap[i][j][k];
+            }
         }
+        //std::cout << "\n";
     }
     imageM = featureMap; //Die maximalen Werte werden in die feature Matrix gespeichert.
 }
 
+//////////////////////////////////// Convolution und MaxPooling Teil 2: ////////////////////////////////////////////////
 
-inline int Channel::maxPooling32(std::vector<std::vector<int>> imageM)
+inline int Channel::conv64(std::vector<std::vector<std::vector<int> > > image, std::vector<std::vector<std::vector<int> > > kernell)
 {
+    /* Hier wird Convolution berechnet von Kernel und Channel.
+     * Dabei hat die Channel-Matrix eine Grösse von 32x10x10x10 und die Kernel-Matrix
+     * eine Grösse von 32x3x3x3.
+     * Die Kernel-Matrix wird bei der Multiplikation der Channel-Matrix jeweils um 1 verschoben,
+     * da ausserhalb des Channel-matrix Bereiches noch 0en hizugefügt wurden.
+     */
+
+    int bias = 0;
+    int sum64 = 0;
+
+    for(int i = 0; i < image.size(); i++)
+    {
+        for(int j = 0; j < image.size(); j++)
+        {
+            for(int k = 0; k < image[0].size(); k++)
+            {
+
+                //std::cout << "|" << image[i][j][k];
+                /// Image * Kernel + Bias = Y-Matrix 32 x 10x10x10
+                sum64 += image[i][j][k] * kernell[i][j][k] + bias;
+                //std::cout << "|" << s;
+
+            }
+
+        }
+        //std::cout << "\n";
+     }
+    return sum64;
+}
+
+inline int Channel::maxPooling64(std::vector<std::vector<std::vector<int> > > image)
+{
+
+    /* Hier wird jeweils der maximale Wert gefiltert, so dass die Matrix
+     * reduziert wird, z.B. eine 10x10x10-Matrix wird in eine 5x5x5-Matrix
+     * umgewandelt.
+     */
+
     int s = 0;
     // Test:
     //std::cout << "Max Image hat die Groesse: " << imageM.size() << "\n";
 
     for (size_t i = 0; i < imageM.size()  ; ++i) // Zeile
     {
-        for (size_t j = 0; j < imageM[0].size() ; ++j) // Spalte
+        for (size_t j = 0; j < imageM.size() ; ++j) // Spalte
         {
-            // kernell[i][j] std::vector<std::vector<int>> kernell
-            s = std::max(s, imageM[i][j]); // Das maximale Element wird ausgefiltert
-
+            for(size_t k = 0; k < imageM[0].size(); k++){
+                // kernell[i][j] std::vector<std::vector<int>> kernell
+                s = std::max(s, imageM[i][j][k]); // Das maximale Element wird ausgefiltert
+            }
         }
     }
-    trace.push_back(s);
+    mask.push_back(s);
     return s;
 }
 
@@ -290,178 +480,179 @@ inline void Channel::connect()
      *  so dass die Kernel-Matrix zusätzlich multipliziert wird.
      */
 
-    std::vector<std::vector<int>> featMap(imageM.size() - kernelM.size() + 1);
+    //std::cout << "do_Kenrel() funktioniert auch!!\n";
+    std::vector<std::vector<std::vector<int>>> featureMap(imageM.size() - kernelM.size() + 1);
+    //std::cout << "featureMap-Matrix size: "<< featureMap.size() << "\n";
 
     //Row index
-    for (size_t rowSize = 0; rowSize < featMap.size(); ++rowSize)
+    for (size_t rowSize = 0; rowSize < featureMap.size(); ++rowSize)
     {
-        std::vector<int> tVector(imageM[0].size() - kernelM[0].size() + 1);
-        featMap[rowSize] = tVector;
+        //std::vector<int>(imageM[0].size() - kernelM[0].size() + 1)
+        std::vector<std::vector<int>> tVector(imageM.size() - kernelM.size() + 1);
+        featureMap[rowSize] = tVector;
         // Column index
-        for (size_t columnSize = 0; columnSize < tVector.size(); ++columnSize)
+
+        for (size_t columnSize = 0; columnSize < featureMap.size(); ++columnSize)
         {
-            featMap[rowSize][columnSize] = conv64(transition(imageM, rowSize, columnSize, kernelM.size(), kernelM[0].size()), kernelM);
-            //std::cout << featureMap[rowSize][columnSize] << " ";
-        }
-    }
-    imageM = featMap;
-}
+            std::vector<int> tVec(imageM.size() - kernelM.size() + 1);
+            featureMap[rowSize][columnSize] = tVec;
 
-inline int Channel::conv64(std::vector<std::vector<int>> iMatrix, std::vector<std::vector<int>> kernel)
-{
-
-    int bias = 0;
-    int con = 0;
-
-    for(int i = 0; i < iMatrix.size(); i++)
-    {
-        for(int j = 0; j < iMatrix[0].size(); j++)
-        {
-            /// Image * Kernel + Bias = Y-Matrix 32 x 20x20x20
-            con += iMatrix[i][j] * kernel[i][j] + bias;
-            //std::cout << "|" << s;
+            for(size_t kSize = 0; kSize < featureMap.size(); kSize++)
+            {
+                //std::cout << featureMap[rowSize][columnSize][kSize] << " ";
+                featureMap[rowSize][columnSize][kSize] = conv64(transition(imageM, rowSize, columnSize, kSize, kernelM.size(), kernelM.size(), kernelM.size()), kernelM);
+                //std::cout << featureMap[rowSize][columnSize][kSize] << " ";
+            }
         }
         //std::cout << "\n";
-     }
-    return con;
-
+    }
+    imageM = featureMap;
 }
 
 inline void Channel::do_Kernel3()
 {
-    /* Diese Funktion wandelt die Matrix in einem Vektor um, so dass diese anhand eines Zwischenvektor's,
+    /* Hier werden jeweils die Groessen der Kernel- und Channel-Matrix gespeichert,
+     * so dass die Image-Matrix in einem Vektor umgewandelt ist, so dass man
+     * jeweils aus 2x2x2 das Maximum filtert.
+     * Diese Funktion wandelt die Matrix in einem Vektor um, so dass diese anhand eines Zwischenvektor's,
      * den Maxpool berechnet werden kann mithilfe der Größen der Matrizen von der Image-Matrix und Kernel- Matrix.
      */
 
-    int pool = 2;
+    int maxPool = 2;
     int stride = 2;
 
     std::cout << "Matrixgroesse von ImageM: " << imageM.size() << "\n";
 
-    std::vector<std::vector<int>> featureMap(int(imageM.size() / pool));
+    std::vector<std::vector<std::vector<int>>> featureMap(int(imageM.size() / maxPool));
 
     std::cout << "Matrixgroesse von featureMap: " << featureMap.size() << "\n";
 
     for (size_t i = 0; i < featureMap.size(); ++i)
     {
-        std::vector<int> tVector(int(imageM.size() / stride));
-        //std::cout << "Groesse von tVector: " << tVector.size() << "\n";
-        featureMap[i] = tVector;  // Zwischenvektor
+        std::vector<std::vector<int>> cVector(int(imageM.size() / stride));
+        featureMap[i] = cVector;
+        //std::cout << "Groesse von cVector: " << cVector.size() << "\n";
 
-        for (size_t j = 0; j < tVector.size(); ++j)
+        for (size_t j = 0; j < cVector.size(); ++j)
         {
-            featureMap[i][j] = maxPooling64(transition(imageM, (kernelM.size() - 1) * i, (kernelM[0].size() - 1) * j,
-                                          kernelM.size() - 1, kernelM[0].size() - 1));
+            std::vector<int> tVector(int(imageM.size() / stride));
+            //std::cout << "Groesse von tVector: " << tVector.size() << "\n";
+            featureMap[i][j] = tVector;  // Zwischenvektor
+
+            for(size_t k = 0; k < tVector.size(); k++)
+            {
+                //std::cout << "| " << featureMap[i][j][k];
+                featureMap[i][j][k] = maxPooling32(transition(imageM, (kernelM.size() - 1) * i, (kernelM.size() - 1) * j, (kernelM.size() - 1) * k,
+                                              kernelM.size() - 1, kernelM.size() - 1, kernelM.size() - 1));
+
+                //std::cout << "|" << featureMap[i][j][k];
+            }
         }
+        //std::cout << "\n";
     }
     imageM = featureMap; //Die maximalen Werte werden in die feature Matrix gespeichert.
+
 }
 
 
-inline int Channel::maxPooling64(std::vector<std::vector<int>> imageM)
+inline std::vector<std::vector<std::vector<int>>> Channel::actDervateLeakyReLU()
 {
-    /* Diese Funktion filtert die maximalen Werte der 32 x 20x20x20- Matrix, um diese Image-Matrix in
-     * eine 32 x 10x10x10 umzuwandeln.
-     * Die gefilterten maximalen Werte werden in ein Vektor gespeichert, so dass man die Werte wieder
-     * Für die Backpropagation nutzen kann.
+    /* Diese Funktion ist die Leaky ReLU Ableitungsfunktion, welches für die
+     * Backpropagation verwendet wird.
      */
 
-    int s = 0;
-    // Test:
-    //std::cout << "Max Image hat die Groesse: " << imageM.size() << "\n";
-
-    for (size_t i = 0; i < imageM.size()  ; ++i) // Zeile
+    for(int i = 0; i < imageM.size(); i++)
     {
-        for (size_t j = 0; j < imageM[0].size() ; ++j) // Spalte
+        for(int j = 0; j < imageM.size(); j++)
         {
-            // kernell[i][j] std::vector<std::vector<int>> kernell
-            s = std::max(s, imageM[i][j]); // Das maximale Element wird ausgefiltert
-
-        }
-    }
-    mask.push_back(s);
-    return s;
-}
-
-inline void Channel::back_propConv64()
-{
-
-    std::cout << "\ntrace-Matrix size: " << trace.size() << "\n";
-    for(int i = trace.size()-1; i > 0; i--)
-    {
-        std::cout << "|" << trace[i];
-    }
-    std::cout << "\n";
-}
-
-
-inline std::vector<std::vector<int>> Channel::rotationKernel()
-{
-    /* Hier wird die Kernel-Matrix rotiert
-     */
-
-    //kernelWeight = 0;
-    std::cout << "\nKernel-Matrix Groesse: " << kernelM.size() << "\n";
-
-
-    for(int row = 0; row < kernelM.size(); row++){
-        for(int col = 0; col < kernelM.size(); col++)
-        {
-            std::reverse(kernelM.begin(), kernelM.end());
-            kernelM[row][col] = kernelM[row][col];
-
-            //kernelW[row].push_back(kW);
-            std::cout << "|" << kernelWeight;
-        }
-        std::cout << "\n";
-    }
-    //kernelW.push_back(kW);
-    return kernelM;
-}
-
-inline std::vector<std::vector<int>> Channel::actDervateLeakyReLU()
-{
-    for(int i = 0; i < imageM.size(); i++){
-        for(int j = 0; j < imageM.size(); j++){
-            // Leaky ReLU activation -> max(0.01*x, x)
-            //Falls die Matrix größer als 0.01 * matrix ist:
-
-            //imageM[i][j] = (image[i][j] > int(0.01 * image[i][j]) ? image[i][j] : int(0.01 * image[i][j]));
-
-            if(imageM[i][j] > 0) /// Falls x > 0 ist dann bleibt der Wert von der Matrix erhalten.
+            for(int k = 0; k < imageM.size(); k++)
             {
-                imageM[i][j] = 1;
-            }
-            else /// Sonst wird max(x * 0.01, x) verrechnet und das Maximum benutzt.
-            {
-                imageM[i][j] = 0.01;
-            }
+                // Leaky ReLU activation -> max(0.01*x, x)
+                //Falls die Matrix größer als 0.01 * matrix ist:
+
+                //imageM[i][j] = (image[i][j] > int(0.01 * image[i][j]) ? image[i][j] : int(0.01 * image[i][j]));
+
+                if(imageM[i][j][k] > 0) /// Falls x > 0 ist dann bleibt der Wert von der Matrix erhalten.
+                {
+                    imageM[i][j][k] = 1;
+                }
+                else /// Sonst wird max(x * 0.01, x) verrechnet und das Maximum benutzt.
+                {
+                    imageM[i][j][k] = 0.01;
+                }
             //imageM[i][j] = (0.01 * imageM[i][j]);
+            }
         }
     }
     return imageM;
 }
 
-
-
-/////////////////////////////////////////////////// Kernel /////////////////////////////////////////////////////////////
-
-inline void Kernel::setKernel(std::vector<std::vector<int> > kernel){
-    kernelMatrix = kernel;
+inline void Channel::weight_change(){
+    for(unsigned int i=0;i<o_matrix.size();i++){
+        for(unsigned int j=0;j<o_matrix.size();j++){
+            for(unsigned int k=0;k<o_matrix.size();k++){
+                    change_w.push_back(o_matrix[i+1][j+1][k+1] * imageM[i][j][k]); //+1 bei o_matrix wegen 0 rand
+                }
+            }
+        }
+    std::reverse(change_w.begin(), change_w.end());
 }
 
-inline std::vector<std::vector<int>> Kernel::resetKernel(){
-    return kernelMatrix;
+inline int Channel::rotationKernel()
+{
+    /* Hier wird die Kernel-Matrix rotiert
+     */
+
+    kernelWeight = 0;
+    kernelW = kernelM;
+    for(unsigned int row = 0; row < kernelM.size(); row++)
+    {
+        for(unsigned int col = 0; col < kernelM.size(); col++)
+        {
+            for(unsigned int k = 0; k < kernelM.size(); k++)
+            {
+                std::reverse(kernelW.begin(), kernelW.end());
+
+                kernelWeight = kernelW[row][col][k];
+                kernelW[row][col][k] = kernelW[row][col][k];
+            }
+
+
+            //kernelW[row].push_back(kW);
+        }
+    }
+    //kernelW.push_back(kW);
+    return kernelWeight;
 }
 
+//////////////////////////////////////////// Kernel: ////////////////////////////////////////////////////////////
+
+inline void Kernel::setKernel(std::vector<std::vector<std::vector<int> > > kernel)
+{
+    kernelM = kernel;
+}
+
+inline std::vector<std::vector<std::vector<int>>> Kernel::resetKernel()
+{
+
+    return kernelM;
+}
 
 inline void Kernel::showKernel(){
-    for(int i = 0; i < kernelMatrix.size(); i++){
-        for(int j = 0; j < kernelMatrix.size(); j++){
-            std::cout << "|" << kernelMatrix[i][j];
+    // Ausgabe der Kernel-Matrix:
+
+    std::cout << "\nKernel-Matrix size: " << kernelM.size() << "\n";
+    for(int i = 0; i < kernelM.size(); i++){
+        for(int j = 0; j < kernelM.size(); j++){
+            for(int k = 0; k < kernelM.size(); k++){
+                //
+                std::cout << "|" << kernelM[i][j][k];
+            }
         }
         std::cout << "\n";
     }
+
 }
+
 
 #endif // CNN_H

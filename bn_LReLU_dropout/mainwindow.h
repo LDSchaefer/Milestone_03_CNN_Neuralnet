@@ -43,7 +43,7 @@ private:
     Ui::MainWindow *ui;
     QColor currentColor;
     GameWidget_3* NeurNet;
-    std::string Filename;
+    std::string Filename;  /// Lade qpg-Datei CNN input
 //    std::string fDirname;
     QString fDirname;
     int nTraining_ev;
