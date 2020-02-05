@@ -3,7 +3,6 @@
 
 #include <QWidget>
 #include "Net.h"
-#include "cnn.h"
 
 class GameWidget_3 : public QWidget
 {
@@ -27,6 +26,8 @@ signals:
 
 public slots:
 
+    void loadCnnqpg(std::string filename);  //load QGP Data in CNN
+
     bool AnalyzeMode(std::string filename, bool qgp, int batch_index);
     bool TestMode(std::string filename, bool qgp);
 
@@ -36,9 +37,6 @@ public slots:
     void setEpoch(int Epoch);
     void setBatch(int number);
     void setTopology(int number);
-
-    void loadCnnqpg(std::string filename);  //load QGP Data in CNN
-
 
     void LoadBatch(std::string filename, bool qgp, int batch_index);
     int AnalyzeModeBatch();

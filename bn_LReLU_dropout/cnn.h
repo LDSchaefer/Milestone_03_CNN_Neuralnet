@@ -254,7 +254,7 @@ inline int Channel::convolution(std::vector<std::vector<std::vector<int>>> image
      * da ausserhalb des Channel-matrix Bereiches noch 0en hizugefügt wurden.
      */
 
-    int bias = 0;
+    int bia = Net.bias[];
     int s = 0;
 
     for(int i = 0; i < image.size(); i++)
@@ -266,7 +266,7 @@ inline int Channel::convolution(std::vector<std::vector<std::vector<int>>> image
 
                 //std::cout << "|" << image[i][j][k];
                 /// Image * Kernel + Bias = Y-Matrix 32 x 20x20x20
-                s += image[i][j][k] * kernell[i][j][k] + bias;
+                s += image[i][j][k] * kernell[i][j][k] + bia;
                 //std::cout << "|" << s;
 
             }
@@ -424,7 +424,7 @@ inline int Channel::conv64(std::vector<std::vector<std::vector<int> > > image, s
      * da ausserhalb des Channel-matrix Bereiches noch 0en hizugefügt wurden.
      */
 
-    int bias = 0;
+    int bia = Net.bias[];
     int sum64 = 0;
 
     for(int i = 0; i < image.size(); i++)
@@ -436,7 +436,7 @@ inline int Channel::conv64(std::vector<std::vector<std::vector<int> > > image, s
 
                 //std::cout << "|" << image[i][j][k];
                 /// Image * Kernel + Bias = Y-Matrix 32 x 10x10x10
-                sum64 += image[i][j][k] * kernell[i][j][k] + bias;
+                sum64 += image[i][j][k] * kernell[i][j][k] + bia;
                 //std::cout << "|" << s;
 
             }

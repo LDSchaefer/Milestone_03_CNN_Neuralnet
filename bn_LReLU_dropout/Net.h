@@ -16,9 +16,13 @@ public:
     Channel con; // Channel Klasse
     Kernel kern; // Kenrel Klasse
     std::vector<int> x_change;
-
+    std::vector<int> bias;
   Net(const std::vector <size_t> &topology)
   {
+    for(int i=0;i<64;i++){
+        bias[i]= rand() % 3 - 1;
+    }
+
     size_t layers_number = topology.size();
     for (size_t layer_num = 0; layer_num != layers_number; layer_num++) {
       net_layers.push_back(Layer());
@@ -55,12 +59,9 @@ public:
   void analyze();
   void back_prop(const std::vector <double> &target_values, size_t test, double epoch, int topology_type);
   void back_propConv64();
+  void back_propConv32();
   void get_results(std::vector <double> &results_values) const;
   void loadQGP(std::string filename);
-
-  void loadCnnQGP(std::string filename); //CNN load file
-  void testConv();
-
   void loadNQGP(std::string filename);
   void print_weights(std::string filename);
 
@@ -70,7 +71,9 @@ public:
   void batchNormalization();
 
   double loss();
-  void cnn(std::vector<std::vector<std::vector<int> > > input);
+  void cnn(std::vector<std::vector<int>> input);
+  void loadCnnQGP(std::string filename); //CNN load file
+  void testConv();
 
   void clear_gradients();
 
@@ -153,7 +156,7 @@ public:
   int ang_teta_stat_n[20];
   int momentum_stat_n[20];
 
-  std::vector<std::vector<std::vector<int>>> kernell;
+  std::vector<std::vector<int>> kernell;
 
 
   ~Net() // Destructor
@@ -467,11 +470,13 @@ inline void Net::change_topology(const std::vector<size_t> &topology)
   }
 }
 
+
+/*
 inline void Net::cnn(std::vector<std::vector<std::vector<int>>> input)
 {
-    /* Hier werden die Inputs-Daten mithilfe des Neuronalem Netzwerk in die
+     Hier werden die Inputs-Daten mithilfe des Neuronalem Netzwerk in die
      * Convolution Neurales Netzwerk gefüllt.
-     */
+     *
 
 
 
@@ -510,7 +515,8 @@ inline void Net::cnn(std::vector<std::vector<std::vector<int>>> input)
     // Daten werden in die CNN Klasse übertragen.
     kern.setKernel(kernell);
     con.setMatrix(input, kernell);
-}
+
+}*/
 
 inline void Net::back_propConv64()
 {
@@ -552,7 +558,6 @@ inline void Net::back_propConv64()
 
         }
         con.change_w.pop_back();
-
     }
 
     int num = 0;
@@ -567,13 +572,72 @@ inline void Net::back_propConv64()
                 }
             }
         }
-        // bias muss noch in das Net gemoved werden da man pro Filter 1 Bias hat und nicht pro kernel 1 bias 1 Filter besteht
-        // besteht aus mehreren Kernels. auf channel ebene
-        con.bias = con.bias + num;
+        bias[i] = bias[i] + num;
         num = 0;
     }
 
 }
+
+inline void Net::back_propConv32()
+{
+    int sum = 0;
+    con.actDervateLeakyReLU(); // Channel Matrix hat abhier ableitungs werte (1,0.01)
+    con.weight_change(); // veränderung der weights wird in vec change_w gespeichert
+    for(unsigned int i = 0; i < 32; i++) // für 64 Channel
+    {
+        for(unsigned int j = 0; j < con.imageM.size(); j++)
+        {
+            for(unsigned int k = 0; k < con.imageM.size(); k++)
+            {
+                for(unsigned int l = 0; l < con.imageM.size(); l++) // jkl für Dimension des Channels
+                {
+                    for(unsigned int x = 0; x < con.kernelM.size(); x++)
+                    {
+                        for(unsigned int y = 0; y < con.kernelM.size(); y++)
+                        {
+                            for(unsigned int z = 0; z < con.kernelM.size(); z++) // xyz für Dimension des Kernels
+                            {
+                            sum += con.imageM[j][k][l]*con.kernelW[x][y][z]; //summen Zeichen der dX_f berechnung
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        x_change.push_back(sum); // veränderung von X wird in x_change gespeichert evtl update analog zu weights
+        sum=0;
+    }
+    for(unsigned int x = 0; x < con.kernelM.size(); x++)
+    {
+        for(unsigned int y = 0; y < con.kernelM.size(); y++)
+        {
+            for(unsigned int z = 0; z < con.kernelM.size(); z++)  // jeder Kernel wert wird mithilfe von vektor change_w geupdated
+            {
+                con.kernelM[x][y][z] =  con.change_w[x] + con.kernelM[x][y][z];
+            }
+
+        }
+        con.change_w.pop_back();
+    }
+
+    int num = 0;
+    for(unsigned int i = 0; i < 32;i++){
+        for(unsigned int j = 0; j < con.imageM.size(); j++)
+        {
+            for(unsigned int k = 0; k < con.imageM.size(); k++)
+            {
+                for(unsigned int l = 0; l < con.imageM.size(); l++) // summe der einzelnen Channel werte für bias update
+                {
+                    num += con.imageM[j][k][l];
+                }
+            }
+        }
+        bias[i] = bias[i] + num;
+        num = 0;
+    }
+
+}
+
 
 void Net::loadCnnQGP(std::string filename)
 {
@@ -588,6 +652,8 @@ void Net::loadCnnQGP(std::string filename)
         //double input;
         for (size_t row = 0; row < 28; row++) {
             for(size_t col = 0; col < 20; col++){
+                std::vector<std::vector<int>> cTemp(20, std::vector<int>(20));
+                con.imageM[col] = cTemp;
                 for(size_t k = 0; k < 20; k++){
                     for(size_t l = 0; l < 20; l++){
 

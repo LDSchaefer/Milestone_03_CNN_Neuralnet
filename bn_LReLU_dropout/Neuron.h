@@ -2,7 +2,6 @@
 #include <vector>
 #include <math.h>
 #include <QDebug>
-#include "cnn.h"
 
 
 using std::vector;
