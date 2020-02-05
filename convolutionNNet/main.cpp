@@ -1,8 +1,75 @@
 #include <QCoreApplication>
 #include <iostream>
 #include "mainCNN.h"
+#include <string>
+#include <stdlib.h>
+#include <fstream>
+
+inline int Channel::read_in()
+{
+    //
+    std::vector<std::vector<std::vector<int>>> readin_val;
+
+    int inp = 0;
+    int numb= 0;
+    int batch_num = 0;
+    int flip;
+    unsigned int num = 0;
+    std::string u_input;
+    std::ifstream file;
+    std::string fileid;
+    std::cout<<"single file [1] oder batch[0] oder kein Import [2]:";
+    std::cin >> inp;
+    if(inp == 0)
+    {
+        //
+        std::cout<< "Wie viele Dateien sind in dem Batch?" ;
+        std::cin >> batch_num;
+        std::cout <<"" << std::endl;
+
+        while(numb<batch_num)
+        {
+            //
+            flip=  rand() % 2 + 1;
+
+            while(numb<batch_num)
+            {
+                //
+                flip=  rand() % 2 + 1;
+                if(flip == 1){
+
+                    fileid = "qgp\\phsd50csr.auau.31.2gev.centr.0000phsd50csr.auau.31.2gev.centr."+ std::to_string(numb) + "_event.dat";
+                }
+
+                else{
+                    fileid = "nqgp\\phsd50csr.auau.31.2gev.centr.0000phsd50csr.auau.31.2gev.centr."+ std::to_string(numb) + "_event.dat";
+                }
+                file.open(fileid);
+                while (file >> num){ // solage ein Wert aus der  file gelesen werden kann ist num /= 0. Sind alle Werte eingelesen wird num 0 while bricht ab
+
+                    num = file.get();
+                    for(size_t channel = 0; channel < 28; channel++){
+                        for(size_t i = 0; i < 20; i++){
+                            for(size_t j = 0; j < 20; j++){
+                                for(size_t k = 0; k < 20; k++){
+                                    readin_val[i][j].push_back(num);
+                                }
+                            }
+                        }
+                    }
 
 
+                    imageM.swap(readin_val); // swap hier falsch pushback evtl.
+                    readin_val.clear();
+                    file.close();
+                    numb++;
+                }
+            }
+        }
+    }
+
+
+}
 
 
 
@@ -132,7 +199,7 @@ inline std::vector<std::vector<std::vector<int>>> Channel::transition(std::vecto
      */
 
     std::vector<std::vector<std::vector<int>>> partOfMatrix(rowSize);
-    //std::cout << "rowSize: " << rowSize << ", colSize: " << colSize << ", kSize: " << kSize << "\n";
+    //std::cout << "rowIndex: " << rowIndex << ", colIndex: " << colIndex << ", kIndex: " << kIndex << "\n";
 
     for (size_t i = 0; i < rowSize; ++i) // Zeilen Größe des Vectors
     {
@@ -377,10 +444,13 @@ inline int Channel::maxPooling64(std::vector<std::vector<std::vector<int> > > im
     {
         for (size_t j = 0; j < imageM.size() ; ++j) // Spalte
         {
-            for(size_t k = 0; k < imageM[0].size(); k++){
+            for(size_t k = 0; k < imageM[0].size(); k++)
+            {
                 // kernell[i][j] std::vector<std::vector<int>> kernell
                 s = std::max(s, imageM[i][j][k]); // Das maximale Element wird ausgefiltert
                 mask[i][j].push_back(s);
+
+
             }
         }
     }
@@ -437,11 +507,11 @@ inline void Channel::do_Kernel3()
     int maxPool = 2;
     int stride = 2;
 
-    std::cout << "Matrixgroesse von ImageM: " << imageM.size() << "\n";
+    //std::cout << "Matrixgroesse von ImageM: " << imageM.size() << "\n";
 
     std::vector<std::vector<std::vector<int>>> featureMap(int(imageM.size() / maxPool));
 
-    std::cout << "Matrixgroesse von featureMap: " << featureMap.size() << "\n";
+    //std::cout << "Matrixgroesse von featureMap: " << featureMap.size() << "\n";
 
     for (size_t i = 0; i < featureMap.size(); ++i)
     {
@@ -494,7 +564,7 @@ inline std::vector<std::vector<std::vector<int>>> Channel::actDervateLeakyReLU()
                 }
                 else /// Sonst wird max(x * 0.01, x) verrechnet und das Maximum benutzt.
                 {
-                    imageM[i][j][k] = 0.01;
+                    float(imageM[i][j][k] = 0.01);
                 }
             //imageM[i][j] = (0.01 * imageM[i][j]);
             }
@@ -544,25 +614,61 @@ inline int Channel::rotationKernel()
     //kernelW.push_back(kW);
     return kernelWeight;
 }
-
-int Channel::backMax64(std::vector<std::vector<std::vector<int> > > image)
+/*
+int Channel::backMax64(std::vector<std::vector<std::vector<int>>> image)
 {
-    for(int i = 0; i < image.size(); i++)
-    {
-        for(int j = 0; j < image.size(); j++)
-        {
-            for(int k = 0; k < image[0].size(); k++)
+    //(2, std::vector<std::vector<int>>(2, std::vector<int>(2, (0,1))))
+    //std::cout << "Image-Matrix size: " << image.size() << "\n";
+    //std::vector<std::vector<std::vector<int>>> tempVector[2][2][2];
+    int backtrace = 0;
+    for(size_t row = 0; row < image.size(); row++){
+        for(size_t col = 0; col < image.size(); col++){
+            for(size_t k = 0; k < image.size(); k++)
             {
+                backtrace = imageM[row][col][k];
+                std::cout << "| " << imageM[row][col][k];
+            }
+        }
+        std::cout << "\n";
+    }
+    return backtrace;
 
-                //std::cout << "|" << image[i][j][k];
+}
+
+void Channel::backpro_Maxpool64()
+{
+    //std::cout << "do_Kenrel() funktioniert auch!!\n";
+    std::vector<std::vector<std::vector<int>>> featureMap(imageM.size() - kernelM.size() + 3);
+    //std::cout << "featureMap-Matrix size: "<< featureMap.size() << "\n";
+
+    //Row index
+    for (size_t rowSize = 0; rowSize < featureMap.size(); ++rowSize)
+    {
+        //std::vector<int>(imageM[0].size() - kernelM[0].size() + 1)
+        std::vector<std::vector<int>> tVector(imageM.size() - kernelM.size() + 3);
+        featureMap[rowSize] = tVector;
+        //std::cout << "featureMap-Matrix size: "<< tVector.size() << "\n";
+        // Column index
+
+        for (size_t columnSize = 0; columnSize < featureMap.size(); ++columnSize)
+        {
+            std::vector<int> tVec(imageM.size() - kernelM.size() + 3);
+            featureMap[rowSize][columnSize] = tVec;
+            //std::cout << "featureMap-Matrix size: "<< tVec.size() << "\n";
+
+            for(size_t kSize = 0; kSize < featureMap.size(); kSize++)
+            {
+                //std::cout << "featureMap["<<rowSize<<"]["<<columnSize<<"]["<<kSize<<"]" << "\n";
+                featureMap[rowSize][columnSize][kSize] = backMax64(transition(imageM, (kernelM.size() + 1) * rowSize, (kernelM.size() + 1) * columnSize, (kernelM.size() + 1) * kSize,
+                                                                              kernelM.size() - 1, kernelM.size() - 1, kernelM.size() - 1));
+                //std::cout << featureMap[rowSize][columnSize][kSize] << " ";
             }
         }
         //std::cout << "\n";
     }
-
-
+    imageM = featureMap;
 }
-
+*/
 void Channel::back_propConv32(){
 
 }
@@ -632,96 +738,101 @@ void Channel::back_propConv64()
     }
 }
 
-void Channel::backpro_Maxpool64()
+
+void Channel::backpro_Maxpool32()
 {
-    // 5x5x5 => 10x10x10
-    //sigma => sigma * dY
+    /// Du kannst die Funktion einfach aufrufen.
+    /* Diese Funktion filtert quasi ebenfalls Sigma von der 10x10x10-Matrix und überträgt die Werte
+     * die Zeile & Spalte auf die 20x20x20-Matrix, so dass es wieder seine Usprüngliche Matrix
+     * berechnet wird.
+     * Es ist keine Garantie, ob es richtig wieder in seine richtigen Reihenfolge gelangt.
+     */
 
-    //std::cout << "do_Kenrel() funktioniert auch!!\n";
-    std::vector<std::vector<std::vector<int>>> featureMap(imageM.size() - kernelM.size() + 1);
-    //std::cout << "featureMap-Matrix size: "<< featureMap.size() << "\n";
+    std::vector<std::vector<std::vector<int>>> backMatrix32(imageM.size() + 10);
+    // Die Matrix wird außerhalb des Randes mit 0 durch + 10 initialisiert und mit 0 gefüllt
+    std::vector<std::vector<int>> backVec32(imageM.size() + 10, std::vector<int>(imageM[0].size() + 10, 0));
 
-    //Row index
-    for (size_t rowSize = 0; rowSize < featureMap.size(); ++rowSize)
+
+    backMatrix32[0] = backVec32;
+
+    for (size_t i = 1; i < imageM.size() + 10; ++i)
     {
-        //std::vector<int>(imageM[0].size() - kernelM[0].size() + 1)
-        std::vector<std::vector<int>> tVector(imageM.size() - kernelM.size() + 1);
-        featureMap[rowSize] = tVector;
-        // Column index
+        backMatrix32[i] = backVec32;
 
-        for (size_t columnSize = 0; columnSize < featureMap.size(); ++columnSize)
-        {
-            std::vector<int> tVec(imageM.size() - kernelM.size() + 1);
-            featureMap[rowSize][columnSize] = tVec;
-
-            for(size_t kSize = 0; kSize < featureMap.size(); kSize++)
-            {
-                //std::cout << featureMap[rowSize][columnSize][kSize] << " ";
-                featureMap[rowSize][columnSize][kSize] = backMax64(transition(imageM, rowSize, columnSize, kSize, kernelM.size(), kernelM.size(), kernelM.size()));
-                //std::cout << featureMap[rowSize][columnSize][kSize] << " ";
-            }
-        }
-        //std::cout << "\n";
-    }
-    imageM = featureMap;
-
-}
-
-void Channel::backpro_Maxpool32(){
-
-}
-
-inline void Channel::backAdd(){
-
-    //std::cout << "It works!!\n";
-    // Hier wird das Ergebnis der Convolution berechnet, dass mithilfe einer
-    // Zwischen-Parameter gespeichert wird und diese auf die Image-Matrix 32x nxnxn
-    // Übertagen wird.
-
-    std::vector<std::vector<std::vector<int>>> tempMatrix(imageM.size() + 2);
-    // Die Matrix wird außerhalb des Randes mit 0 durch +2 initialisiert und mit 0 gefüllt
-    std::vector<std::vector<int>> tempVector(imageM.size() + 2, std::vector<int>(imageM[0].size() + 2, 0));
-
-    //std::vector<int> temp(imageM[0].size() + 2, 0)
-   //(std::vector<int>(imageM[0].size() + 2, 0))
-
-    //std::cout << "Image-Matrix size: " << imageM.size() << "\n";
-    tempMatrix[0] = tempVector;
-
-    for (size_t i = 1; i < imageM.size() + 1; ++i)
-    {
-        tempMatrix[i] = tempVector;
-
-        for (size_t j = 1; j < imageM.size() + 1; ++j)
+        for (size_t j = 1; j < imageM.size() + 10; ++j)
         {
             //tempMatrix[i][j] = tempVector;
 
-            for(size_t k = 1; k < imageM[0].size() + 1; ++k)
+            for(size_t k = 1; k < imageM[0].size() + 10; ++k)
             {
-                tempMatrix[i][j][k] = imageM[i - 1][j - 1][k - 1];
+                backMatrix32[i][j][k] = imageM[i - 1][j - 1][k - 1];
                 //std::cout << "|" << tempMatrix[i][j][k];
             }
         }
         //std::cout << "\n";
     }
-    tempMatrix[imageM.size() + 1] = tempVector;
-    imageM = tempMatrix; // Ergebnis-Matrix
+    backMatrix32[imageM.size() + 1] = backVec32;
+    imageM = backMatrix32; // Ergebnis-Matrix
+    std::cout << "Image-Matrix size: " << imageM.size() << "\n";
 }
+
+inline void Channel::backpro_Maxpool64(){
+
+
+    // Hier wird das Ergebnis der Backpropagation der MaxPooling berechnet, dass mithilfe einer
+    // Zwischen-Vektos gespeichert wird und diese auf die Image-Matrix 32x nxnxn
+    // Übertagen wird.
+    // Die Y_Image 5x5x5-Matrix wird zu einer 10x10x10-Matrix umgewandelt.
+
+    std::vector<std::vector<std::vector<int>>> backMatrix(imageM.size() + 5);
+    // Die Matrix wird außerhalb des Randes mit 0 durch +2 initialisiert und mit 0 gefüllt
+    std::vector<std::vector<int>> backVector(imageM.size() + 5, std::vector<int>(imageM[0].size() + 5, 0));
+
+    //std::vector<int> temp(imageM[0].size() + 2, 0)
+   //(std::vector<int>(imageM[0].size() + 2, 0))
+
+    //std::cout << "Image-Matrix size: " << tempMatrix.size() << "\n";
+    backMatrix[0] = backVector;
+
+    for (size_t i = 1; i < imageM.size() + 5; ++i)
+    {
+        backMatrix[i] = backVector;
+
+        for (size_t j = 1; j < imageM.size() + 5; ++j)
+        {
+            //tempMatrix[i][j] = tempVector;
+
+            for(size_t k = 1; k < imageM[0].size() + 5; ++k)
+            {
+                backMatrix[i][j][k] = imageM[i - 1][j - 1][k - 1];
+                //std::cout << "|" << tempMatrix[i][j][k];
+            }
+        }
+        //std::cout << "\n";
+    }
+    backMatrix[imageM.size() + 1] = backVector;
+    imageM = backMatrix; // Ergebnis-Matrix
+}
+
+////// Testfunktion:
 
 inline void Channel::printMask()
 {
     //Gebe die Image-Matrix aus:
+    std::vector<std::vector<std::vector<int>>> tempVector(2, std::vector<std::vector<int>>(2, std::vector<int>(2,0)));
+    //std::cout << "Image-Matrix size: " << mask.size() << "\n";
+    for(int i = 0; i < tempVector.size(); i++)
+    {
+        for(int j = 0; j < tempVector.size(); j++){
+            for(int k = 0; k < tempVector.size(); k++){
 
-    std::cout << "Image-Matrix size: " << mask.size() << "\n";
-    for(int i = 0; i < mask.size(); i++){
-        for(int j = 0; j < mask.size(); j++){
-            for(int k = 0; k < mask.size(); k++){
-                //
-                std::cout << "|" << mask[i][j][k];
-                }
+
+                std::cout << tempVector[i][j][k] << " ";
             }
+        }
         std::cout << "\n";
     }
+
 }
 //////////////////////////////////////////// Kernel: ////////////////////////////////////////////////////////////
 
@@ -872,14 +983,21 @@ int main(int argc, char *argv[])
 
     //conv.Imageclear();
     std::cout << "\n";
-    std::cout << "\n...................................Backpropagation.......................................\n";
-    //conv.backpro_Maxpool64();
-    conv.backAdd();
+    std::cout << "\n...................................Backpropagation backpro_Maxpool64().......................................\n";
+    //
+    //conv.printMask();
     conv.backpro_Maxpool64();
+    std::cout << "\n";
     conv.printMatrix();
-    //std::cout << "\n";
 
-    //std::cout << "\n.....................Kernel W'............................................\n";
-    //conv.rotationKernel();
+    std::cout << "\nActivation and Leaky ReLU:\n";
+    conv.actDervateLeakyReLU();
+    std::cout << "\n";
+    conv.printMatrix();
+
+    //conv.back_propConv64();
+    conv.backpro_Maxpool32();
+    std::cout << "\n";
+    conv.printMatrix();
     return 0;
 }

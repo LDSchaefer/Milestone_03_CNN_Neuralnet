@@ -12,6 +12,11 @@ public:
     Channel(){}
     ~Channel(){}
 
+    std::vector<int> indexCount;
+    int read_in();
+
+    std::vector<std::vector<std::vector<int>>> input_vec;
+
     std::vector<std::vector<std::vector<int>>> imageM;  // Channel-Matrix
     std::vector<std::vector<std::vector<int>>> kernelM; // Kernel-MAtrix
 
@@ -78,7 +83,7 @@ public:
     void backpro_Maxpool32();
     void backpro_Maxpool64();
 
-    int backMax64(std::vector<std::vector<std::vector<int>>> image);
+    int backMax64(std::vector<std::vector<std::vector<int> > > image);
 
     int rotationKernel();
 
