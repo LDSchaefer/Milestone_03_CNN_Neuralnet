@@ -10,7 +10,10 @@ inline int Channel::read_in()
     //
     std::vector<std::vector<std::vector<int>>> readin_val;
 
+    Channel con;
+    int channel;
     int inp = 0;
+    int count = 0;
     int numb= 0;
     int batch_num = 0;
     int flip;
@@ -18,66 +21,174 @@ inline int Channel::read_in()
     std::string u_input;
     std::ifstream file;
     std::string fileid;
-    std::cout<<"single file [1] oder batch[0] oder kein Import [2]:";
+    std::cout << "\nsingle file [1] oder batch[0] oder kein Import [2]:";
     std::cin >> inp;
     if(inp == 0)
     {
         //
-        std::cout<< "Wie viele Dateien sind in dem Batch?" ;
-        std::cin >> batch_num;
-        std::cout <<"" << std::endl;
+        std::cout<< "\nGeben Sie ein Zahl (1 bis 2) ein: " ;
+        std::cin >> flip;
+        std::cout << "" << std::endl;
 
-        while(numb<batch_num)
+        while(flip < 80)
         {
-            //
-            flip=  rand() % 2 + 1;
-
-            while(numb<batch_num)
+            std::cout << ".....................................Prozess ist im Gang.......................................\n;";
+            if(flip == 1)
             {
-                //
-                flip=  rand() % 2 + 1;
-                if(flip == 1){
 
-                    fileid = "qgp\\phsd50csr.auau.31.2gev.centr.0000phsd50csr.auau.31.2gev.centr."+ std::to_string(numb) + "_event.dat";
-                }
+                fileid = "qgp\\phsd50csr.auau.31.2gev.centr.0000phsd50csr.auau.31.2gev.centr."+ std::to_string(8000) + "_event.dat";
+                std::cout << "Daten werden in file gefuellt!!!...................count[" << count << "\n";
+                //break;
+                count++;
 
-                else{
-                    fileid = "nqgp\\phsd50csr.auau.31.2gev.centr.0000phsd50csr.auau.31.2gev.centr."+ std::to_string(numb) + "_event.dat";
-                }
-                file.open(fileid);
-                while (file >> num){ // solage ein Wert aus der  file gelesen werden kann ist num /= 0. Sind alle Werte eingelesen wird num 0 while bricht ab
+            }
 
-                    num = file.get();
-                    for(size_t channel = 0; channel < 28; channel++){
-                        for(size_t i = 0; i < 20; i++){
-                            for(size_t j = 0; j < 20; j++){
-                                for(size_t k = 0; k < 20; k++){
-                                    readin_val[i][j].push_back(num);
-                                }
+
+
+            else
+            {
+                fileid = "nqgp\\phsd50csr.auau.31.2gev.centr.0000phsd50csr.auau.31.2gev.centr."+ std::to_string(numb) + "_event.dat";
+            }
+
+
+            file.open(fileid);
+            std::cout << "\n.........................................Oeffne File.....................................\n";
+            while (file >> num){ // solage ein Wert aus der  file gelesen werden kann ist num /= 0. Sind alle Werte eingelesen wird num 0 while bricht ab
+
+                num = file.get();
+                for(size_t channel = 0; channel < 28; channel++){
+                    for(size_t i = 0; i < 20; i++){
+                        for(size_t j = 0; j < 20; j++){
+                            for(size_t k = 0; k < 20; k++){
+                                readin_val[i][j].push_back(num);
                             }
                         }
                     }
+                 }
 
 
-                    imageM.swap(readin_val); // swap hier falsch pushback evtl.
-                    readin_val.clear();
-                    file.close();
-                    numb++;
+                 input_vec.swap(readin_val); // swap hier falsch pushback evtl.
+                 readin_val.clear();
+                 file.close();
+                 numb++;
+            }
+
+        }
+
+    }
+
+    else if(inp == 1){
+        std::cout<< "Geben Sie den Pfad an (z.B. C:\\Users\\sade2\\OneDrive\\Desktop\\Uni3.Semester\\PRGPraktikum\\Milenstone_3):";
+        std::cin >> fileid;
+        std::cout << "" << std::endl;
+        file.open(fileid);
+        while (file >> num){
+                num = file.get();
+                for(size_t channel = 0; channel < 28; channel++){
+                    for(size_t i = 0; i < 20; i++){
+                        for(size_t j = 0; j < 20; j++){
+                            for(size_t k = 0; k < 20; k++){
+                                readin_val[i][j].push_back(num);
+                            }
+                        }
+                    }
+                }
+        }
+        input_vec.swap(readin_val);
+        readin_val.clear();
+        file.close();
+    }
+
+    else if(inp == 2){
+            return 0;
+    }
+    int random, chan = 0;
+    for(chan = 0; chan < 28; chan++){
+        for(int i = 0; i < 3; i++){
+            for(int j = 0; j < 3; j++){
+                for(int k = 0; k < 3; k++){
+                    random = rand() % 3 -1 ;
+                    kernelll[i][j][k] = random;
                 }
             }
         }
     }
+    std::cout << "Möchten Sie gefuellt Daten in CNN berechnen? yes[0] or no[1]: " ;
+    std::cin >> channel;
+    if(channel == 0){
+        std::cout << "\n..................Prozess zum CNN ist im gang................................\n";
+        con.setMatrix(chan, input_vec, kernelll);
+        con.printMatrix();
+        con.add();
+        std::cout << "\n";
+        con.do_Kernel();
+
+        // Convolution + Activation Leaky ReLU:
+        std::cout << "\n...........................Convolution: Matrix ist im prozess...................\n";
+        std::cout << "\n...................................Activation: Leaky ReLU..........................:\n";
+        //conv.printMatrix();
+        con.activationLReLU();
+        con.printMatrix();
+
+        std::cout << "\n.................................Max Pooling..........................................\n";
+        std::cout << "\nChannel: 32 x 10x10x10\n";
+        con.do_Kernel2();
+        con.printMatrix();
+        std::cout << "\n";
+
+        //conv.Kernelclear();
+        /////////////////////////////////////// Channel 64: /////////////////////////////////////////////////////
+        std::cout << "\nConvolution 64 x 10x10x10:\n";
+        con.add();
+        con.connect();
+
+        std::cout << "Activation and Leaky ReLU:\n";
+        con.activationLReLU();
+        std::cout << "\n";
+
+        con.printMatrix();
+        std::cout << "\n";
+
+        std::cout << "\n.................................Max Pooling 64..........................................\n";
+        std::cout << "\nChannel: 64 x 5x5\n";
+        con.do_Kernel3();
+        con.printMatrix();
+
+        //conv.Imageclear();
+        std::cout << "\n";
+        std::cout << "\n...................................Backpropagation backpro_Maxpool64().......................................\n";
+        //
+        //conv.printMask();
+        con.backpro_Maxpool64();
+        std::cout << "\n";
+        con.printMatrix();
+
+        std::cout << "\nActivation and Leaky ReLU:\n";
+        con.actDervateLeakyReLU();
+        std::cout << "\n";
+        con.printMatrix();
+        std::cout << "\n";
+
+    }
+
+    // Hier kommt Read In einer Datei hin siehe Milestone 1
+    // Funktion soll sowohl Dateien als auch Batches eingelesen können -> überladen der Funktion für jeweils Batches und Dateien
+
 
 
 }
 
 
 
-inline int Channel::setMatrix(std::vector<std::vector<std::vector<int> > > image, std::vector<std::vector<std::vector<int> > > kernel){
+inline int Channel::setMatrix(int channelcnt, std::vector<std::vector<std::vector<int> > > image, std::vector<std::vector<std::vector<int> > > kernel){
 
         imageM = image;
         kernelM = kernel;
         kernelW = image;
+        std::cout << "\n..................Channel couter:[" << channelcnt << "]................................\n";
+        channelcnt++;
+
+        return channelcnt;
 
 }
 
@@ -886,28 +997,7 @@ int main(int argc, char *argv[])
 
     //std::cout << "\nKernel: " << row << "x" << col << "x" << k1 << "-Matrix:\n";
 
-    for(int size = 0; size < 28; size++)
-    {
-        for(int i = 0; i < row; i++)
-        {
-            std::vector<std::vector<int>> cTemp(col, std::vector<int>(k1));
-            imageMatrix[i] = cTemp;
-
-            for(int j = 0; j < col; j++)
-            {
-                for(int k = 0; k < k1; k++)
-                {
-                    random = rand() % 10 - 1;
-                     imageMatrix[i][j][k] = random;
-
-                        //std::cout << vec[i][j][k][l] << " ";
-
-                }
-            }
-        }
-    }
-
-    for(int size = 0; size < 28; size++)
+    for(int kernelsize = 0; kernelsize < 28; kernelsize++)
     {
         for(int i = 0; i < r2; i++)
         {
@@ -927,9 +1017,32 @@ int main(int argc, char *argv[])
         }
     }
 
+    for(int chanelsize = 0; chanelsize < 28; chanelsize++)
+    {
+        for(int i = 0; i < row; i++)
+        {
+            std::vector<std::vector<int>> cTemp(col, std::vector<int>(k1));
+            imageMatrix[i] = cTemp;
 
-    // Channel Image:
-    conv.setMatrix(imageMatrix, kernelMatrix);
+            for(int j = 0; j < col; j++)
+            {
+                for(int k = 0; k < k1; k++)
+                {
+                    random = rand() % 10 - 1;
+                     imageMatrix[i][j][k] = random;
+
+                        //std::cout << vec[i][j][k][l] << " ";
+                }
+            }
+        }
+        // Channel Image:
+        conv.setMatrix(chanelsize, imageMatrix, kernelMatrix);
+    }
+
+
+
+
+
     std::cout << "\n28 x 20x20x20-Image Matrix:\n";
     conv.printMatrix();
     std::cout << "\n";
@@ -996,8 +1109,9 @@ int main(int argc, char *argv[])
     conv.printMatrix();
 
     //conv.back_propConv64();
-    conv.backpro_Maxpool32();
-    std::cout << "\n";
-    conv.printMatrix();
+    //conv.backpro_Maxpool32();
+    //std::cout << "\n";
+    //conv.printMatrix();
+    conv.read_in();
     return 0;
 }

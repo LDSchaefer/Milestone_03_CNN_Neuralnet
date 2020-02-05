@@ -12,7 +12,7 @@ public:
     Channel(){}
     ~Channel(){}
 
-    std::vector<int> indexCount;
+    int indexCount;
     int read_in();
 
     std::vector<std::vector<std::vector<int>>> input_vec;
@@ -21,6 +21,7 @@ public:
     std::vector<std::vector<std::vector<int>>> kernelM; // Kernel-MAtrix
 
 
+    std::vector<std::vector<std::vector<int>>> kernelll;
     std::vector<int> trace;    //Backtrace Vector 10x10x10
     std::vector<std::vector<std::vector<int>>> mask;    // Backtrace Vector 5x5x5
 
@@ -38,7 +39,7 @@ public:
 
     //int zeile, spalte, k2, l2;
 
-    int setMatrix(std::vector<std::vector<std::vector<int>>> vec, std::vector<std::vector<std::vector<int>>> kernel);
+    int setMatrix(int count, std::vector<std::vector<std::vector<int>>> vec, std::vector<std::vector<std::vector<int>>> kernel);
 
     void printMatrix();
 
