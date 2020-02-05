@@ -4,6 +4,7 @@
 #include <QColor>
 #include <QColorDialog>
 #include "mainwindow.h"
+//#include "ui_mainwindow.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -145,6 +146,13 @@ void MainWindow::setBatch(int number)
 
 void MainWindow::loadQGP() //load QGP information
 {
+    fDirname = QFileDialog::getExistingDirectory(this, tr("Open input data directory"), QDir::homePath());
+    qDebug() << " - loadQGP - fDirname: " << fDirname;
+}
+
+void MainWindow::loadCnnqpg()
+{
+
     fDirname = QFileDialog::getExistingDirectory(this, tr("Open input data directory"), QDir::homePath());
     qDebug() << " - loadQGP - fDirname: " << fDirname;
 }

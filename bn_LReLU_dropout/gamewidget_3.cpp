@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>      // std::setw
+#include "cnn.h"
 
 
 
@@ -323,4 +324,10 @@ void GameWidget_3::loadNQGPbatch( std::string filename, int batch_index, bool qg
 //                                 tr("loading completed"),
 //                                 QMessageBox::Ok);
 }
+///////////////////////////// Convolution Neural Net //////////////////////////////////////
+void GameWidget_3::loadCnnqpg(std::string filename)
+{
+    /////// CNN load File ///////////
 
+    Neuronet.loadCnnQGP(filename);
+}

@@ -16,6 +16,7 @@ public:
     Channel con; // Channel Klasse
     Kernel kern; // Kenrel Klasse
     std::vector<int> x_change;
+
   Net(const std::vector <size_t> &topology)
   {
     size_t layers_number = topology.size();
@@ -56,6 +57,10 @@ public:
   void back_propConv64();
   void get_results(std::vector <double> &results_values) const;
   void loadQGP(std::string filename);
+
+  void loadCnnQGP(std::string filename); //CNN load file
+  void testConv();
+
   void loadNQGP(std::string filename);
   void print_weights(std::string filename);
 
@@ -65,7 +70,7 @@ public:
   void batchNormalization();
 
   double loss();
-  void cnn(std::vector<std::vector<int>> input);
+  void cnn(std::vector<std::vector<std::vector<int> > > input);
 
   void clear_gradients();
 
@@ -148,7 +153,7 @@ public:
   int ang_teta_stat_n[20];
   int momentum_stat_n[20];
 
-  std::vector<std::vector<int>> kernell;
+  std::vector<std::vector<std::vector<int>>> kernell;
 
 
   ~Net() // Destructor
@@ -462,7 +467,7 @@ inline void Net::change_topology(const std::vector<size_t> &topology)
   }
 }
 
-inline void Net::cnn(std::vector<std::vector<int>> input)
+inline void Net::cnn(std::vector<std::vector<std::vector<int>>> input)
 {
     /* Hier werden die Inputs-Daten mithilfe des Neuronalem Netzwerk in die
      * Convolution Neurales Netzwerk gefüllt.
@@ -475,26 +480,36 @@ inline void Net::cnn(std::vector<std::vector<int>> input)
     qDebug() << ".....Net::cnn: Convolution Neural Net.......\n";
     for(size_t r = 0; r < input.size(); r++)
     {
-        for(size_t c = 0; c < input.size(); c++){
-
-          random = rand() % 100;
-
-          input[r][c] = random;
-
-          //con.set(input, kernell);
+        for(size_t c = 0; c < input.size(); c++)
+        {
+            for(size_t k = 0; k < input.size(); k++)
+            {
+                //random = rand() % 100;
+                input[r][c][k] = ;
+            }
         }
     }
 
-    for(size_t r2 = 0; r2 < 3; r2++){
-        for(size_t c2 = 0; c2 < 3; c2++){
-            ran = rand() % 3 - 1;
-            kernell[r2][c2] = ran;
+    for(int i = 0; i < 3; i++)
+    {
+        std::vector<std::vector<int>> cTemp(3, std::vector<int>(3));
+        kernell[i] = cTemp;
+
+        for(int j = 0; j < 3; j++)
+        {
+            for(int k = 0; k < 3; k++)
+            {
+                ran = rand() % 3 - 1;
+                kernell[i][j][k] = ran;
+                //std::cout << vec[i][j][k][l] << " ";
+
+                }
         }
     }
 
     // Daten werden in die CNN Klasse übertragen.
     kern.setKernel(kernell);
-    con.set(input, kernell);
+    con.setMatrix(input, kernell);
 }
 
 inline void Net::back_propConv64()
@@ -532,14 +547,16 @@ inline void Net::back_propConv64()
         {
             for(unsigned int z = 0; z < con.kernelM.size(); z++)  // jeder Kernel wert wird mithilfe von vektor change_w geupdated
             {
-                con.kernelM[x][y][z] =  con.change_w.pop_back() + con.kernelM[x][y][z];
+                con.kernelM[x][y][z] =  con.change_w[x] + con.kernelM[x][y][z];
             }
 
         }
+        con.change_w.pop_back();
 
     }
+
     int num = 0;
-    for(unsigned int i = 0; i <64;i++){
+    for(unsigned int i = 0; i < 64;i++){
         for(unsigned int j = 0; j < con.imageM.size(); j++)
         {
             for(unsigned int k = 0; k < con.imageM.size(); k++)
@@ -555,5 +572,81 @@ inline void Net::back_propConv64()
         con.bias = con.bias + num;
         num = 0;
     }
+
+}
+
+void Net::loadCnnQGP(std::string filename)
+{
+    /* Hier wird die qpg Datei eingelesen und die Image-Matrix mit Daten gefüllt:
+     */
+
+    qDebug() << "------  Lade qpg-File in die Channel-Matrix   ------";
+    int random;
+    std::ifstream QGP_file(filename.c_str());
+  //  int ss = 0;
+    if (!QGP_file.eof()) {
+        //double input;
+        for (size_t row = 0; row < 28; row++) {
+            for(size_t col = 0; col < 20; col++){
+                for(size_t k = 0; k < 20; k++){
+                    for(size_t l = 0; l < 20; l++){
+
+                        QGP_file >> con.imageM[col][k][l];
+
+                    }
+                }
+            }
+          //Neuron &neuron = net_layers[0][neuron_num];
+
+          //neuron.set_output_value(input);
+  //        if(input) ss++;//qDebug() << input << " " ;
+        }
+      }
+    for(size_t r = 0; r < 28; r++){
+        for(size_t c = 0; c < 3; c++){
+            for(size_t k1 = 0; k1 < 3; k1++){
+                for(size_t l1 = 0; l1 < 3; l1++){
+
+                    random = rand() % 3 - 1; // -1 bis 1
+                    con.kernelM[c][k1][l1] = random;
+                }
+            }
+        }
+    }
+    /// Input der Matrzen vom Neuralem Netzwerk:
+    con.setMatrix(con.imageM, con.kernelM);
+  //  qDebug() << " --- ss: " << ss;
+    QGP_file.close();
+}
+
+void Net::testConv()
+{
+    int random;
+
+    for (size_t row = 0; row < 28; row++) {
+        for(size_t col = 0; col < 20; col++){
+            for(size_t k = 0; k < 20; k++){
+                for(size_t l = 0; l < 20; l++){
+
+                    random = rand() % 50 - 1;
+                    con.imageM[col][k][l] = random;
+                }
+            }
+        }
+    }
+
+    for(size_t r = 0; r < 28; r++){
+        for(size_t c = 0; c < 3; c++){
+            for(size_t k1 = 0; k1 < 3; k1++){
+                for(size_t l1 = 0; l1 < 3; l1++){
+
+                    random = rand() % 3 - 1; // -1 bis 1
+                    con.kernelM[c][k1][l1] = random;
+                }
+            }
+        }
+    }
+    /// Input der Matrzen vom Neuralem Netzwerk:
+    con.setMatrix(con.imageM, con.kernelM);
 
 }
