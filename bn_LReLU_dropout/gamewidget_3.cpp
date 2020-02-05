@@ -324,3 +324,10 @@ void GameWidget_3::loadNQGPbatch( std::string filename, int batch_index, bool qg
 //                                 QMessageBox::Ok);
 }
 
+///////////////////////////// Convolution Neural Net //////////////////////////////////////
+void GameWidget_3::loadCnnqpg(std::string filename)
+{
+    /////// CNN load File ///////////
+
+    Neuronet.loadCnnQGP(filename);
+}

@@ -19,6 +19,8 @@ public:
 
 public slots:
     void loadQGP(); //load QGP information
+    void loadCnnqpg(); // lade qpg information
+
     void analysisStep(int iEp = 0);
     void analysisStep1(int iEp = 0);
     void testStep(int iEp = 0);
@@ -43,7 +45,7 @@ private:
     Ui::MainWindow *ui;
     QColor currentColor;
     GameWidget_3* NeurNet;
-    std::string Filename;  /// Lade qpg-Datei CNN input
+    std::string Filename;
 //    std::string fDirname;
     QString fDirname;
     int nTraining_ev;

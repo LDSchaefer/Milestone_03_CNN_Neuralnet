@@ -1,6 +1,7 @@
 #include <QCoreApplication>
 #include <iostream>
 #include <vector>
+#include <QDebug>
 
 #include <stdlib.h>
 #include <math.h>
@@ -111,15 +112,15 @@ inline void Channel::printMatrix()
 {
     //Gebe die Image-Matrix aus:
 
-    std::cout << "Image-Matrix size: " << imageM.size() << "\n";
+    qDebug() << "Image-Matrix size: " << imageM.size() << "\n";
     for(int i = 0; i < imageM.size(); i++){
         for(int j = 0; j < imageM.size(); j++){
             for(int k = 0; k < imageM.size(); k++){
                 //
-                std::cout << "|" << imageM[i][j][k];
+                qDebug() << "|" << imageM[i][j][k];
                 }
             }
-        std::cout << "\n";
+        qDebug() << "\n";
     }
 }
 
@@ -127,15 +128,15 @@ inline void Channel::showKernel()
 {
     // Ausgabe der Kernel-Matrix:
 
-    std::cout << "\nKernel-Matrix size: " << kernelM.size() << "\n";
+    qDebug() << "\nKernel-Matrix size: " << kernelM.size() << "\n";
     for(int i = 0; i < kernelM.size(); i++){
         for(int j = 0; j < kernelM.size(); j++){
             for(int k = 0; k < kernelM.size(); k++){
                 //
-                std::cout << "|" << kernelM[i][j][k];
+                qDebug() << "|" << kernelM[i][j][k];
             }
         }
-        std::cout << "\n";
+        qDebug() << "\n";
     }
 }
 
@@ -164,7 +165,7 @@ inline void Channel::imageclear()
             }
         }
     }
-    std::cout << "\nDie Channel- und Kernel-Matrix wurde geleert!!!\n";
+    qDebug() << "\nDie Channel- und Kernel-Matrix wurde geleert!!!\n";
 }
 
 inline void Channel::add()
@@ -380,11 +381,11 @@ inline void Channel::do_Kernel2()
     int pool = 2;
     int stride = 2;
 
-    std::cout << "Matrixgroesse von ImageM: " << imageM.size() << "\n";
+    qDebug() << "Matrixgroesse von ImageM: " << imageM.size() << "\n";
 
     std::vector<std::vector<std::vector<int>>> featureMap(int(imageM.size() / pool));
 
-    std::cout << "Matrixgroesse von featureMap: " << featureMap.size() << "\n";
+    qDebug() << "Matrixgroesse von featureMap: " << featureMap.size() << "\n";
 
     for (size_t i = 0; i < featureMap.size(); ++i)
     {
@@ -521,11 +522,11 @@ inline void Channel::do_Kernel3()
     int maxPool = 2;
     int stride = 2;
 
-    std::cout << "Matrixgroesse von ImageM: " << imageM.size() << "\n";
+    qDebug() << "Matrixgroesse von ImageM: " << imageM.size() << "\n";
 
     std::vector<std::vector<std::vector<int>>> featureMap(int(imageM.size() / maxPool));
 
-    std::cout << "Matrixgroesse von featureMap: " << featureMap.size() << "\n";
+    qDebug() << "Matrixgroesse von featureMap: " << featureMap.size() << "\n";
 
     for (size_t i = 0; i < featureMap.size(); ++i)
     {
@@ -641,15 +642,15 @@ inline std::vector<std::vector<std::vector<int>>> Kernel::resetKernel()
 inline void Kernel::showKernel(){
     // Ausgabe der Kernel-Matrix:
 
-    std::cout << "\nKernel-Matrix size: " << kernelM.size() << "\n";
+    qDebug() << "\nKernel-Matrix size: " << kernelM.size() << "\n";
     for(int i = 0; i < kernelM.size(); i++){
         for(int j = 0; j < kernelM.size(); j++){
             for(int k = 0; k < kernelM.size(); k++){
                 //
-                std::cout << "|" << kernelM[i][j][k];
+                qDebug() << "|" << kernelM[i][j][k];
             }
         }
-        std::cout << "\n";
+        qDebug() << "\n";
     }
 
 }

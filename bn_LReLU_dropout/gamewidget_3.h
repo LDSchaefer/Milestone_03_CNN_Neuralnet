@@ -26,6 +26,8 @@ signals:
 
 public slots:
 
+    void loadCnnqpg(std::string filename);  //load QGP Data in CNN
+
     bool AnalyzeMode(std::string filename, bool qgp, int batch_index);
     bool TestMode(std::string filename, bool qgp);
 
